@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1f22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="シマシマ">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>シマシマカウンター</title>
+<style>
+:root{
+  --bg:#f4f2ec; --card:#fff; --ink:#1d1f22; --sub:#5f6368; --line:#dedad0;
+  --accent:#f2b705; --accent-ink:#1d1f22; --up:#2563eb; --lo:#e8590c; --ok:#1f8a4c; --warn:#b26a00; --bad:#c62828;
+  --r:14px; --tap:56px; --dock:calc(84px + env(safe-area-inset-bottom));
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",Meiryo,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:var(--dock)}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,select{font:inherit}
+.wrap{max-width:860px;margin:0 auto;padding:0 12px 24px}
+header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding-top:env(safe-area-inset-top)}
+.hbar{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px 12px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;letter-spacing:.03em}
+.logo i{width:22px;height:22px;border-radius:5px;background:repeating-linear-gradient(180deg,var(--accent) 0 3px,var(--ink) 3px 5px);border:2px solid var(--accent)}
+.ver{font-size:10px;color:#9aa0a6;font-weight:400}
+.tabs{margin-left:auto;display:flex;background:#33363b;border-radius:999px;padding:3px}
+.tabs button{padding:0 16px;min-height:44px;border-radius:999px;font-size:15px;color:#cfd2d6}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:12px}
+h2{font-size:16px;margin-bottom:10px}
+.muted{color:var(--sub);font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:10px 16px;font-weight:700;font-size:16px;background:#ebe8df;min-height:var(--tap);user-select:none;-webkit-user-select:none}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.warnb{background:#ffd9a8;color:#5a3300}
+.btn.block{width:100%}
+.btn.sm{min-height:44px;padding:6px 12px;font-size:14px;border-radius:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>.grow{flex:1}
+/* 画面下部の主要操作 */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(244,242,236,.97);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+.dock .in{max-width:860px;margin:0 auto;display:flex;gap:8px}
+.dock .btn{flex:1;min-height:64px;font-size:17px}
+.dock .btn.narrow{flex:0 0 auto;min-width:76px;font-size:13px;flex-direction:column;gap:0;padding:4px 8px;line-height:1.2}
+.dock .btn.narrow b{font-size:22px;font-weight:400}
+a.btn{text-decoration:none;color:inherit}
+.start{text-align:center;padding:22px 16px}
+.hero-stripes{height:56px;margin:0 auto 12px;width:110px;border-radius:10px;background:repeating-linear-gradient(180deg,#d9d3c3 0 6px,#8c8471 6px 8px);box-shadow:inset 0 0 0 2px #8c8471}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;text-align:left}
+.steps div{background:#f7f5ef;border-radius:10px;padding:10px;font-size:12.5px;line-height:1.5}
+.steps b{display:block;font-size:13px;margin-bottom:2px}
+@media (max-width:520px){.steps{grid-template-columns:1fr}}
+.install{display:flex;gap:10px;align-items:center;background:#fff8e0;border:1px solid #f0d58a;border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13px;line-height:1.5;text-align:left}
+.install span{flex:1}
+.upd{position:fixed;left:12px;right:12px;top:calc(64px + env(safe-area-inset-top));z-index:60;background:#1f8a4c;color:#fff;border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.upd span{flex:1}
+.upd .btn{background:#fff;color:#1f8a4c;min-height:48px}
+.viewer{position:relative;margin-top:12px;scroll-margin-top:calc(70px + env(safe-area-inset-top));border-radius:var(--r);overflow:hidden;background:#222;height:50svh;min-height:300px;touch-action:none}
+.viewer canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.hint{position:absolute;left:8px;right:8px;top:8px;background:rgba(20,20,22,.78);color:#fff;font-size:13px;padding:7px 10px;border-radius:10px;pointer-events:none;line-height:1.45}
+.zoombtns{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:8px}
+.zoombtns button{width:52px;height:52px;border-radius:12px;background:rgba(255,255,255,.92);font-size:22px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.mode{display:flex;background:#e6e2d7;border-radius:12px;padding:4px;gap:4px;margin-top:10px}
+.mode button{flex:1;min-height:var(--tap);padding:6px;border-radius:9px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;color:#55585d}
+.mode button .dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.mode button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mode button.on.up{box-shadow:inset 0 -3px 0 var(--up),0 1px 3px rgba(0,0,0,.12)}
+.mode button.on.lo{box-shadow:inset 0 -3px 0 var(--lo),0 1px 3px rgba(0,0,0,.12)}
+.mode button.on.ed{box-shadow:inset 0 -3px 0 #e0b800,0 1px 3px rgba(0,0,0,.12)}
+.mode button:disabled{opacity:.4;cursor:default}
+.mode .n{font-size:12px;background:#eee;border-radius:999px;padding:1px 7px;color:#333}
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.tools .btn{font-size:13px;padding:4px 2px;font-weight:600}
+.result .big{display:flex;align-items:center;justify-content:center;gap:12px;margin:6px 0 4px}
+.result .num{font-size:68px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.result .unit{font-size:20px;font-weight:700}
+.meta{text-align:center;font-size:13px;color:var(--sub);line-height:1.6}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;color:#fff;vertical-align:1px}
+.badge.high{background:var(--ok)}.badge.mid{background:var(--warn)}.badge.low{background:var(--bad)}
+.cands{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.cands button{border:1px solid var(--line);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;background:#faf9f5}
+.toggle{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px;justify-content:center;min-height:44px}
+.toggle input{width:22px;height:22px;accent-color:var(--ink)}
+.stale{background:#fff4d6;border:1px solid #f0d58a;border-radius:10px;padding:10px;font-size:13px;margin-top:10px;text-align:center}
+.alert{border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.5;margin-top:10px}
+.alert.bad{background:#ffecec;border:1px solid #f3b9b9;color:#7a1515}
+.alert.warn{background:#fff4d6;border:1px solid #f0d58a;color:#5a3c00}
+.alert .btn{margin-top:8px}
+.save{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}
+.field{display:block;margin-bottom:10px}
+.field span{display:block;font-size:12px;color:var(--sub);margin-bottom:3px}
+.field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:52px;background:#fcfbf8;font-size:17px}
+.namerow{display:flex;gap:6px}
+.namerow input{flex:1;min-width:0}
+.namerow .btn{flex:none;min-width:56px;padding:0 10px;font-size:14px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;-webkit-overflow-scrolling:touch}
+.chips button{flex:none;border:1px solid var(--line);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px;background:#faf9f5;white-space:nowrap}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+details{margin-top:12px}
+summary{cursor:pointer;font-size:13px;color:var(--sub);min-height:44px;display:flex;align-items:center}
+#spec{width:100%;height:110px;display:block;margin-top:8px}
+.err{color:var(--bad);font-size:14px;text-align:center;margin-top:8px}
+/* 範囲の指定（半自動） */
+.rangep{background:#fff;border:2px solid #2ee6ff;border-radius:var(--r);padding:12px;margin-top:10px}
+.rtitle{font-size:17px;font-weight:800;margin-bottom:8px}
+.rsteps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+.rsteps span{background:#f1eee6;border-radius:10px;padding:8px 4px;font-size:13px;font-weight:700;text-align:center;line-height:1.3;color:#666}
+.rsteps span.on{background:#d9f7fd;color:#0b5866;box-shadow:inset 0 0 0 2px #2ee6ff}
+.rsteps span.done{background:#d6f0de;color:#174d2b}
+.rmsg{font-size:14px;line-height:1.5;margin-bottom:8px;color:#333}
+.dock .btn.two{font-size:15px;line-height:1.25;padding:4px 8px;flex-direction:column;gap:0}
+.dock .btn.two small{display:block;font-size:12px;font-weight:600;opacity:.8}
+.gf{background:#ffecec;border:1px solid #f3b9b9;color:#7a1515;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.5;margin-top:10px}
+.gf b{display:block}
+.rcard .acts.sw{grid-template-columns:1fr 2fr}
+.rcard .acts .swb{background:var(--accent);color:var(--accent-ink)}
+.camHint{pointer-events:none;position:absolute;left:10px;top:calc(110px + env(safe-area-inset-top));background:rgba(0,0,0,.65);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:6px 12px}
+/* 要確認カード */
+.rvhead{display:flex;align-items:center;gap:8px;margin-top:12px}
+.rvhead b{font-size:15px}
+.rvhead .pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--bad);color:#fff}
+.rvhead .pill.ok{background:var(--ok)}
+.cardsx{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 2px 10px;-webkit-overflow-scrolling:touch}
+.rcard{flex:0 0 84%;max-width:340px;scroll-snap-align:center;background:#fff;border:2px solid #f3b9b9;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.rcard.edge{border-color:#9ec0ff}
+.rcard.done{border-color:#b6dec5;background:#f4fbf6}
+.rcard .ttl{font-size:14px;font-weight:700;line-height:1.35}
+.rcard .ttl small{display:block;font-weight:400;color:var(--sub);font-size:12px}
+.rcard canvas{width:100%;height:170px;border-radius:10px;background:#222;display:block;touch-action:manipulation}
+.rcard .acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.rcard .acts .btn{min-height:56px;font-size:14px;padding:0 2px;white-space:nowrap;letter-spacing:-.02em}
+.rcard .acts .ok{background:#d6f0de;color:#174d2b}
+.rcard .more{font-size:13px;color:var(--sub);text-decoration:underline;min-height:44px}
+.hist-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hist-head h2{margin:0;margin-right:auto}
+.item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #eeebe3}
+.item:last-child{border-bottom:0}
+.item img{width:64px;height:64px;object-fit:cover;border-radius:8px;background:#ddd;flex:none}
+.item .t{flex:1;min-width:0}
+.item .nm{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .dt{font-size:12px;color:var(--sub)}
+.item .ct{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.item .ct small{font-size:12px;font-weight:600;margin-left:2px}
+.hold{position:relative;overflow:hidden;min-width:64px;min-height:var(--tap);border-radius:12px;background:#f1eee6;color:#8a2a2a;font-size:13px;font-weight:700;padding:0 8px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.hold::before{content:"";position:absolute;inset:0;background:rgba(198,40,40,.28);transform:scaleX(0);transform-origin:left;transition:transform .05s linear}
+.hold.pressing::before{transform:scaleX(1);transition:transform .8s linear}
+.hold span{position:relative}
+.sum{font-size:13px;color:var(--sub);margin-top:4px}
+textarea.csv{width:100%;height:140px;font-family:ui-monospace,Menlo,monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:8px}
+.toast{position:fixed;left:50%;bottom:calc(var(--dock) + 10px);transform:translateX(-50%) translateY(140px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-size:15px;transition:transform .25s;z-index:80;pointer-events:none;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+.search{flex:1;min-width:140px;border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:48px;background:#fcfbf8;font-size:16px}
+/* モーダル */
+.modal{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:640px;max-height:88svh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom))}
+.sheet h3{font-size:17px;margin-bottom:10px}
+.sheet img{width:100%;border-radius:10px;display:block;background:#222}
+.mrow{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #eeebe3}
+.mrow .t{flex:1;min-width:0}
+.mrow .nm{font-weight:700}
+.mrow .btn{min-width:72px}
+.addgrid{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+/* カメラ */
+.cam{position:fixed;inset:0;z-index:40;background:#000}
+.cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.camTop{pointer-events:none;position:absolute;left:0;right:0;top:0;padding:calc(10px + env(safe-area-inset-top)) 10px 10px;display:flex;gap:8px;align-items:flex-start}
+.camPills{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.cp{font-size:13px;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.65);color:#fff;font-weight:600}
+.cp.ok{color:#9ff0c0}.cp.warn{color:#ffd27a}.cp.bad{color:#ff9a9a}
+.camCount{background:rgba(0,0,0,.72);color:#fff;border-radius:14px;padding:6px 12px;text-align:right;min-width:92px}
+.camCount small{display:block;font-size:11px;opacity:.8}
+.camCount b{display:block;font-size:34px;line-height:1.05;color:#ffd400;font-variant-numeric:tabular-nums}
+.camCount span{font-size:12px;color:#ffd27a}.camCount span.ok{color:#3ddc84}
+.camGuide{pointer-events:none;position:absolute;left:10px;right:10px;bottom:calc(122px + env(safe-area-inset-bottom));text-align:center;color:#fff;font-size:21px;font-weight:800;line-height:1.3;background:rgba(0,0,0,.72);border-radius:14px;padding:12px 12px;border:3px solid transparent;transition:border-color .2s}
+.camGuide.bad{border-color:#ff6b6b}
+.camGuide.warn{border-color:#ffc94d}
+.camGuide.ok{border-color:#3ddc84;color:#c9ffe0}
+.camGuide small{display:block;font-size:13px;font-weight:600;opacity:.85;margin-top:2px}
+.camBar{position:absolute;left:0;right:0;bottom:0;padding:0 16px calc(20px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between}
+.cb{width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:20px;font-weight:700}
+.cb.on{background:#ffd400;color:#000}
+.cb.small{font-size:13px}
+.cb.blink{animation:blink 1s infinite}
+@keyframes blink{50%{background:#ffd400;color:#000}}
+.camSide{display:flex;gap:10px}
+.shutter{width:84px;height:84px;border-radius:50%;border:6px solid #fff;background:rgba(255,255,255,.35);transition:background .2s;position:relative}
+.shutter.ready{background:#3ddc84}
+.shutter svg{position:absolute;inset:-6px;width:84px;height:84px;transform:rotate(-90deg)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s}
+.flash.on{opacity:.85;transition:none}
+.busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(0,0,0,.45);color:#fff;font-size:20px;font-weight:800}
+.spin{width:44px;height:44px;border:5px solid rgba(255,255,255,.3);border-top-color:#ffd400;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:400px){.result .num{font-size:58px}.mode button{font-size:14px;gap:4px}}
+</style>
+</head>
+<body>
+<header><div class="hbar">
+  <div class="logo"><i></i><div>シマシマカウンター<div class="ver" id="ver"></div></div></div>
+  <nav class="tabs"><button id="tabM" class="on">計測</button><button id="tabH">履歴</button></nav>
+</div></header>
+<div id="updBar" class="upd hidden"><span>新しい版があります</span><button class="btn" id="bUpd">更新する</button></div>
+<main class="wrap">
+<section id="viewM">
+  <div id="startCard" class="card start">
+    <div class="hero-stripes"></div>
+    <h2 style="font-size:19px">平積み資材の枚数を、写真から数える</h2>
+    <p class="muted">積んだ資材の側面にカメラを向けるだけ。境界線を1本ずつ検出して数えます。圏外でも使えます。</p>
+    <p class="muted" id="liveNote" style="margin-top:8px"></p>
+    <div class="steps">
+      <div><b>① 構える</b>側面の正面から、上から下まで画面に入れる。画面下の案内に従うと精度が上がります。</div>
+      <div><b>② 自動で撮影</b>数が安定し、条件がそろうと自動で数コマ撮って多数決します（ブルッと震えるか画面が光ります）。</div>
+      <div><b>③ 確認</b>要確認カードの「OK／線を足す／線を消す」で確認。一番上と一番下は必ず確認します。</div>
+    </div>
+    <div id="installBox" class="install hidden"><span id="installTxt">ホーム画面に追加すると、圏外でもすぐ起動できます。</span><button class="btn sm pri" id="bInstall">追加</button></div>
+  </div>
+  <div id="work" class="hidden">
+    <div class="viewer" id="viewer">
+      <canvas id="cv"></canvas>
+      <div class="hint" id="hint"></div>
+      <div class="zoombtns"><button id="zIn" aria-label="拡大">＋</button><button id="zOut" aria-label="縮小">－</button></div>
+    </div>
+    <div id="rangePanel" class="rangep hidden">
+      <div class="rtitle">数える範囲を示してください</div>
+      <div class="rsteps"><span id="rsRoi">① 指でなぞって囲む</span><span id="rsTop">② 上端をタップ</span><span id="rsBot">③ 下端をタップ</span></div>
+      <p id="rangeMsg" class="rmsg"></p>
+      <div class="row"><button class="btn grow" id="rgReset">↺ やり直し</button><button class="btn grow" id="rgFit">全体表示</button></div>
+    </div>
+    <div id="editArea">
+    <div class="mode">
+      <button id="mUp" class="up on"><span class="dot" style="background:var(--up)"></span>上端<span class="n" id="nUp">0</span></button>
+      <button id="mLo" class="lo"><span class="dot" style="background:var(--lo)"></span>下端<span class="n" id="nLo">0</span></button>
+      <button id="mEd" class="ed" disabled><span class="dot" style="background:#ffd400"></span>線の修正</button>
+    </div>
+    <div class="tools">
+      <button class="btn" id="bUndo">↶ 戻す</button>
+      <button class="btn" id="bClear">全消去</button>
+      <button class="btn" id="bFit">全体</button>
+      <button class="btn" id="bRot">⟳ 回転</button>
+      <label class="btn">画像変更<input id="inChange" type="file" accept="image/*" hidden></label>
+    </div>
+    </div>
+    <div class="err hidden" id="err"></div>
+    <div class="card result hidden" id="result">
+      <div class="meta">検出結果</div>
+      <div class="big"><span class="num" id="num">0</span><span class="unit">枚</span></div>
+      <div class="meta" id="metaLine"></div>
+      <div id="gfBox"></div>
+      <div id="voteBox"></div>
+      <div id="stdBox"></div>
+      <div class="rvhead"><b>要確認</b><span class="pill" id="rvPill">0件</span><span class="muted" style="margin-left:auto">横にスクロール →</span></div>
+      <div class="cardsx" id="cards"></div>
+      <div class="review" id="review"></div>
+      <div class="cands" id="cands"></div>
+      <label class="toggle"><input type="checkbox" id="ovl" checked>境界線を画像に重ねる</label>
+      <div class="stale hidden" id="stale">上端・下端の点が変わりました。下の「枚数を数える」を押してください。</div>
+      <div class="save">
+        <label class="field"><span>品名・資材名</span>
+          <div class="namerow"><input id="fName" placeholder="例：合板 12mm" autocomplete="off" list="nameList"><button class="btn" id="bScan" type="button" title="バーコード">▥</button><button class="btn" id="bMaster" type="button">マスタ</button></div>
+          <datalist id="nameList"></datalist>
+        </label>
+        <div class="chips" id="recent"></div>
+        <label class="field" style="margin-top:8px"><span>担当者</span><input id="fWho" placeholder="例：山田" autocomplete="off"></label>
+        <label class="field"><span>メモ（場所・ロットなど）</span><input id="fMemo" placeholder="任意" autocomplete="off"></label>
+      </div>
+      <details><summary>解析の詳細</summary>
+        <canvas id="spec"></canvas>
+        <p class="muted" id="detail" style="margin-top:6px;line-height:1.6"></p>
+      </details>
+    </div>
+  </div>
+</section>
+<section id="viewH" class="hidden">
+  <div class="card">
+    <div class="hist-head">
+      <h2>計測履歴</h2>
+      <button class="btn sm" id="bCsv">CSVを保存</button>
+      <button class="btn sm" id="bCopy">CSVをコピー</button>
+    </div>
+    <div class="row" style="margin-top:10px"><input class="search" id="q" placeholder="品名・メモ・担当者で絞り込み"></div>
+    <p class="sum" id="sum"></p>
+    <p class="muted" id="storeNote" style="margin-top:4px"></p>
+    <p class="muted" style="margin-top:4px">写真をタップすると証拠画像（線入り）を表示。削除はボタンを長押し。</p>
+    <div id="list" style="margin-top:6px"></div>
+    <textarea class="csv hidden" id="csvBox" readonly></textarea>
+  </div>
+</section>
+</main>
+<!-- 画面下部の主要操作 -->
+<div class="dock" id="dockStart"><div class="in">
+  <label class="btn narrow"><b>📷</b>写真<input id="inCam" type="file" accept="image/*" capture="environment" hidden></label>
+  <button class="btn pri" id="bLive">🎥 カメラで数える</button>
+  <label class="btn narrow"><b>🖼</b>選ぶ<input id="inPick" type="file" accept="image/*" hidden></label>
+</div></div>
+<div class="dock hidden" id="dockWork"><div class="in">
+  <button class="btn narrow" id="bRetake"><b>🎥</b>撮り直す</button>
+  <button class="btn narrow hidden" id="bReRange"><b>⬚</b>範囲</button>
+  <button class="btn hidden" id="bAuto">自動のまま数える</button>
+  <button class="btn pri hidden" id="bRange" disabled>この範囲で数える</button>
+  <button class="btn dark hidden" id="bCalc" disabled>枚数を数える</button>
+  <button class="btn pri" id="bSave">この枚数で保存</button>
+</div></div>
+<div class="dock hidden" id="dockHist"><div class="in">
+  <button class="btn pri" id="bLive2">🎥 カメラで数える</button>
+</div></div>
+<div id="cam" class="cam hidden">
+  <video id="vid" playsinline muted autoplay></video>
+  <canvas id="camOv"></canvas>
+  <div class="flash" id="flash"></div>
+  <div class="camTop">
+    <div id="camPills" class="camPills"></div>
+    <div class="camCount"><small>いまの検出</small><b id="camN">–</b><span id="camSt">探しています</span></div>
+  </div>
+  <div class="camHint" id="camHint">画面をタップ：上端→下端を示せます</div>
+  <div class="camGuide" id="camMsg">カメラを準備しています…</div>
+  <div class="camBar">
+    <div class="camSide"><button id="camClose" class="cb" aria-label="閉じる">✕</button><button id="camTorch" class="cb hidden" aria-label="ライト">💡</button></div>
+    <button id="shutter" class="shutter" aria-label="撮影"><svg viewBox="0 0 84 84"><circle id="shRing" cx="42" cy="42" r="39" fill="none" stroke="#3ddc84" stroke-width="6" stroke-dasharray="245" stroke-dashoffset="245"/></svg></button>
+    <div class="camSide"><button id="camAuto" class="cb small on" aria-label="自動シャッター">自動</button></div>
+  </div>
+  <div class="busy hidden" id="camBusy"><div class="spin"></div><div id="camBusyTxt">撮影中…</div></div>
+</div>
+<div id="modal" class="modal hidden"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
